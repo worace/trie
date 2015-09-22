@@ -62,6 +62,17 @@
     (is (= "A" (first (dict-words))))
     (is (= "Zyzzogeton" (last (dict-words))))))
 
+(deftest test-retrieving-word
+  (testing "retrieves sub-tree from path created by word's characters"
+    (let [t (insert-words ["a" "as" "ask" "asp" "ass"])
+          sub (retrieve t "as")]
+      (is (= #{\k \p \s} (into #{} (keys (:children sub))))))))
+
+(deftest test-suggestions
+  (testing "suggests children of provided text string"
+    (let [t (insert-words ["ask" "asking" "asked" "askew"])]
+      (is (= ["ask" "asking" "asked" "askew"] (suggest t "as"))))))
+
 (deftest test-big-test
   (testing "reads lots of words"
     (let [t (insert-words (dict-words))]
