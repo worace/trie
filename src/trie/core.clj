@@ -34,3 +34,14 @@
 
 (defn suggest [t word]
   (map (partial str word) (words (retrieve t word))))
+
+(defn dict-words []
+  (clojure.string/split (slurp "/usr/share/dict/words") #"\n"))
+
+(def tcount (comp count words))
+
+(defn rec-tcount
+  ([t] (rec-tcount t 0))
+  ([t n] (if (:word? t)
+           (inc (reduce + (map rec-tcount (vals (:children t)))))
+           (reduce + (map rec-tcount (vals (:children t)))))))

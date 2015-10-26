@@ -23,6 +23,21 @@
       (is (not (get-in t [:children \a :word?])))
       (is (get-in t [:children \a :children \s :word?])))))
 
+(deftest test-count-empty-trie
+  (is (= 0 (tcount (trie)))))
+
+(deftest test-counting-words
+  (testing "counts completed words in the trie"
+    (let [t (insert-words ["as" "do" "pizza"])]
+      (is (= 3 (tcount t)))
+      )))
+
+(deftest test-rec-count
+  (testing "counts without building word-strings"
+    (is (= 0 (rec-tcount (trie))))
+    (let [t (insert-words ["as" "do" "pizza"])]
+      (is (= 3 (rec-tcount t))))))
+
 (deftest test-inserting-additional-words
   (testing "leaves existing words intact"
     (let [t (insert (insert (trie) "a") "as")
@@ -53,9 +68,6 @@
     (let [t (insert-words (trie) ["a" "as" "ask"])]
       (is (:word? (get-in t [:children \a :children \s :children \k]))))))
 
-(defn dict-words []
-  (clojure.string/split (slurp "/usr/share/dict/words") #"\n"))
-
 (deftest test-read-dict
   (let [w (dict-words)]
     (is (= 235886 (count (dict-words))))
@@ -73,7 +85,7 @@
     (let [t (insert-words ["ask" "asking" "asked" "askew"])]
       (is (= ["ask" "asking" "asked" "askew"] (suggest t "as"))))))
 
-(deftest test-big-test
+#_(deftest test-big-test
   (testing "reads lots of words"
     (let [t (insert-words (dict-words))]
       (is (= 235886 (count (words t)))))))
