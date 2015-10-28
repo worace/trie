@@ -44,8 +44,6 @@
        (map :word)
        (map (partial str substring))))
 
-#_(map (partial str word) (words (retrieve t word)))
-
 (defn dict-words []
   (clojure.string/split (slurp "/usr/share/dict/words") #"\n"))
 
@@ -64,5 +62,5 @@
   [t substring selection]
   (if-let [subtrie (retrieve t selection)]
     (assoc-in t (key-path selection)
-     (update-in subtrie [:selections] inc))
+              (update-in subtrie [:selections] inc))
     t))
