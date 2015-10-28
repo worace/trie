@@ -2,7 +2,7 @@
 
 (defn trie
   ([] (trie false))
-  ([word?] {:children {} :word? word?}))
+  ([word?] {:children {} :word? word? :selections 0}))
 
 (defn insert [t [char & rest]]
   (let [node (or (get-in t [:children char]) (trie))]
@@ -11,13 +11,15 @@
       (assoc-in t [:children char] (insert node rest)))))
 
 (defn words
-  ([t] (map #(apply str %) (words t [])))
+  ([t] (map identity (words t [])))
   ([t path]
-  (concat
-   (if (:word? t) [path] [])
-   (mapcat (fn [[char child]]
-             (words child (conj path char)))
-           (:children t)))))
+   (concat
+    (if (:word? t)
+      [{:word (apply str path) :selections (:selections t)}]
+        [])
+    (mapcat (fn [[char child]]
+              (words child (conj path char)))
+            (:children t)))))
 
 (defn insert-words
   ([words] (insert-words (trie) words))
@@ -32,8 +34,15 @@
       (get-in t [:children curr])
       (recur (get-in t [:children curr]) (first tail) (rest tail)))))
 
-(defn suggest [t word]
-  (map (partial str word) (words (retrieve t word))))
+(defn suggest [t substring]
+  (->> substring
+       (retrieve t)
+       (words)
+       (sort-by (juxt (comp - :selections) :word))
+       (map :word)
+       (map (partial str substring))))
+
+#_(map (partial str word) (words (retrieve t word)))
 
 (defn dict-words []
   (clojure.string/split (slurp "/usr/share/dict/words") #"\n"))
@@ -45,3 +54,13 @@
   ([t n] (if (:word? t)
            (inc (reduce + (map rec-tcount (vals (:children t)))))
            (reduce + (map rec-tcount (vals (:children t)))))))
+
+(defn key-path [word]
+  (mapcat vector (repeat :children) word))
+
+(defn select
+  [t substring selection]
+  (if-let [subtrie (retrieve t selection)]
+    (assoc-in t (key-path selection)
+     (update-in subtrie [:selections] inc))
+    t))

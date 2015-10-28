@@ -4,7 +4,7 @@
 
 (deftest test-trie
   (testing "generates new map"
-    (is (= #{:children :word?} (into #{} (keys (trie)))))))
+    (is (= #{:children :word? :selections} (into #{} (keys (trie)))))))
 
 (deftest test-word-trie
   (testing "sets word val to true"
@@ -60,8 +60,8 @@
 (deftest test-words
   (testing "retrieves all words out of the tree"
     (let [t (insert (trie) "a")]
-      (is (= ["a"] (words t)))
-      (is (= ["a" "as"] (words (insert t "as")))))))
+      (is (= [{:word "a" :selections 0}] (words t)))
+      (is (= [{:word "a" :selections 0} {:word "as" :selections 0}] (words (insert t "as")))))))
 
 (deftest test-insert-words
   (testing "takes trie and coll of words and inserts all, returning the trie"
@@ -83,7 +83,18 @@
 (deftest test-suggestions
   (testing "suggests children of provided text string"
     (let [t (insert-words ["ask" "asking" "asked" "askew"])]
-      (is (= ["ask" "asking" "asked" "askew"] (suggest t "as"))))))
+      (is (= ["ask" "asked" "askew" "asking"] (suggest t "as"))))))
+
+(deftest test-selecting-suggestions
+  (testing "selecting a completion upgrades its precedence in subsequent queries"
+    (let [t (insert-words ["ask" "asking" "asked" "askew"])
+          s1 (select t "as" "asked")
+          s2 (select (select t "as" "asking") "as" "asking")]
+      (is (= "ask" (first (suggest t "as"))))
+      (is (= 1 (:selections (get-in s1 (key-path "asked")))))
+      (is (= 2 (:selections (get-in s2 (key-path "asking")))))
+      (is (= "asked" (first (suggest s1 "as"))))
+      (is (= "asking" (first (suggest s2 "as")))))))
 
 #_(deftest test-big-test
   (testing "reads lots of words"
