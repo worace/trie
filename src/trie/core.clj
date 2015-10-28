@@ -10,13 +10,15 @@
       (assoc-in t [:children char] (assoc node :word? true))
       (assoc-in t [:children char] (insert node rest)))))
 
+(defn word [char-path t]
+  {:word (apply str char-path)
+   :selections (:selections t)})
+
 (defn words
-  ([t] (map identity (words t [])))
+  ([t] (words t []))
   ([t path]
    (concat
-    (if (:word? t)
-      [{:word (apply str path) :selections (:selections t)}]
-        [])
+    (if (:word? t) [(word path t)] [])
     (mapcat (fn [[char child]]
               (words child (conj path char)))
             (:children t)))))
